@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI vs HUMAN | 시 구별 테스트</title>
+    <!-- Core Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            touch-action: manipulation;
+        }
+        .font-serif { font-family: 'Nanum Myeongjo', serif; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-white text-black selection:bg-black selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const QUESTIONS = [
+            {
+                id: 1, topic: "퇴근길",
+                poemA: "지하철 문이 닫히면\n검은 유리창 위로 겹쳐지는 얼굴들\n누구의 것도 아닌 피곤이\n서로의 어깨를 밀어내며 자리를 잡는다\n환승역의 소음은 익숙한 비명이 된다",
+                poemB: "주황색 가로등이 하나둘 켜지면\n오늘 하루도 무사히 끝났음을 안다\n집으로 돌아가는 발걸음은 가볍고\n내일은 오늘보다 더 나을 거라는\n작은 희망 하나 품고 걸어가는 길",
+                humanAnswer: 'A',
+                explanation: "A는 현대인의 건조한 정서를 '익숙한 비명'이라는 감각적인 어휘로 표현했습니다. B는 AI 특유의 '희망차고 전형적인' 마무리 방식이 돋보입니다."
+            },
+            {
+                id: 2, topic: "관계",
+                poemA: "우리는 서로의 문장 사이에 놓인\n침묵의 길이를 재는 데 시간을 다 썼다\n맞춤법이 틀린 마음들이\n교정되지 못한 채 쌓여가는 동안\n너는 나의 오타가 되었고 나는 너의 여백이 되었다",
+                poemB: "마음의 문을 열고 너에게 다가가면\n너는 환한 미소로 나를 반겨주었지\n우리 사이에 쌓인 오해의 벽을 허물고\n진심 어린 대화로 서로를 이해할 때\n사랑은 비로소 꽃을 피우는 법이니까",
+                humanAnswer: 'A',
+                explanation: "A는 '오타', '여백' 등 현대적인 비유를 통해 관계를 묘사한 사람의 시입니다. B는 AI가 학습한 고전적인 '사랑과 이해'의 공식을 따르고 있습니다."
+            },
+            {
+                id: 3, topic: "새벽",
+                poemA: "모두가 잠든 깊은 밤의 정적 속에서\n나 홀로 깨어 세상을 바라본다\n어둠은 만물을 감싸 안고\n지친 영혼에게 휴식을 선사하며\n새로운 내일을 위한 에너지를 채워준다",
+                poemB: "냉장고 돌아가는 소리가\n방 안의 유일한 생존 신고 같다\n싱크대 위에 놓인 씻지 않은 컵 하나가\n어제와 오늘 사이에 애매하게 걸려 있고\n창밖은 잉크를 쏟은 듯 무겁게 고여 있다",
+                humanAnswer: 'B',
+                explanation: "B는 생활 밀착형 소품(냉장고 소리, 씻지 않은 컵)을 통해 고독을 구체화한 사람의 시입니다. A는 새벽의 기능을 설명하는 AI의 서술 방식입니다."
+            },
+            {
+                id: 4, topic: "오래된 습관",
+                poemA: "손톱을 바짝 깎는 버릇이 있다\n살점이 드러나 아릴 때까지\n그렇게 해야만 비로소\n내가 내 몸의 경계를 확인하는 것 같아서\n덜어내도 줄어들지 않는 불안을 잘라낸다",
+                poemB: "매일 아침 같은 시간에 일어나\n창문을 열고 신선한 공기를 마신다\n반복되는 일상이 주는 안정감은\n나를 더 나은 사람으로 만들고\n어제보다 조금 더 성장한 나를 발견한다",
+                humanAnswer: 'A',
+                explanation: "A는 '손톱 깎기'와 '불안'을 연결한 사람의 심리적 묘사입니다. B는 자기계발서 느낌의 긍정적인 삶을 강조하는 AI의 패턴입니다."
+            },
+            {
+                id: 5, topic: "기다림",
+                poemA: "기다림은 창문에 맺힌 김 서림 같다\n손가락으로 이름을 써보아도\n금세 다시 흐려지는 풍경들\n너는 오지 않고 계절만 서성이다가\n유리창 너머로 저녁이 먼저 도착한다",
+                poemB: "버스를 기다리는 정류장에서\n시계를 보며 너를 생각한다\n너와 함께했던 소중한 시간들이\n영화처럼 머릿속을 스쳐 지나가고\n나는 설레는 마음으로 내일을 기다린다",
+                humanAnswer: 'A',
+                explanation: "A는 기다림을 '김 서림'과 '저녁의 도착'으로 시각화한 사람의 문장입니다. B는 누구나 생각할 수 있는 평이한 상황 설정과 결론을 가진 AI의 문장입니다."
+            }
+        ];
+
+        function App() {
+            const [gameState, setGameState] = useState('start');
+            const [currentRound, setCurrentRound] = useState(0);
+            const [score, setScore] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+
+            const handleSelect = (answer) => {
+                if (selectedAnswer) return;
+                setSelectedAnswer(answer);
+                if (answer === QUESTIONS[currentRound].humanAnswer) setScore(s => s + 1);
+            };
+
+            const handleNext = () => {
+                if (currentRound < QUESTIONS.length - 1) {
+                    setCurrentRound(r => r + 1);
+                    setSelectedAnswer(null);
+                    window.scrollTo(0, 0);
+                } else {
+                    setGameState('result');
+                }
+            };
+
+            if (gameState === 'start') {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-in">
+                        <div className="w-full max-w-md space-y-12 text-center">
+                            <h1 className="text-6xl font-black tracking-tighter leading-none">AI일까?<br />사람일까?</h1>
+                            <div className="py-8 border-y border-gray-100 font-medium text-lg text-gray-700 break-keep leading-relaxed">
+                                인공지능의 정교한 알고리즘과<br />인간의 서툰 진심 사이.<br />당신은 그 차이를 구별할 수 있습니까?
+                            </div>
+                            <button onClick={() => setGameState('play')} className="w-full py-5 bg-black text-white text-xl font-bold rounded-2xl active:scale-95 transition-transform shadow-xl">
+                                테스트 시작하기
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'result') {
+                const accuracy = Math.round((score / QUESTIONS.length) * 100);
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-in">
+                        <div className="max-w-md w-full text-center space-y-10">
+                            <h1 className="text-6xl font-black italic tracking-tighter">FINISHED</h1>
+                            <div className="bg-black text-white p-12 rounded-[2.5rem] shadow-2xl">
+                                <p className="text-gray-400 uppercase tracking-widest text-[10px] mb-4 font-bold">인간 감성 감지율</p>
+                                <p className="text-8xl font-black leading-none">{accuracy}%</p>
+                                <p className="mt-4 text-sm text-gray-400 font-medium italic">5문제 중 {score}문제를 맞혔습니다.</p>
+                            </div>
+                            <button onClick={() => window.location.reload()} className="w-full py-5 border-2 border-black text-black font-bold rounded-2xl active:scale-95 transition-transform text-lg">
+                                다시 도전하기
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = QUESTIONS[currentRound];
+            const isSelected = !!selectedAnswer;
+
+            return (
+                <div className="min-h-screen bg-white flex flex-col">
+                    <header className="sticky top-0 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 z-50 py-4 px-6 flex justify-between items-center">
+                        <h2 className="font-black text-base tracking-tighter">DETECTION</h2>
+                        <span className="text-xs font-bold text-gray-400">{currentRound + 1} / {QUESTIONS.length}</span>
+                    </header>
+                    
+                    <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 flex flex-col space-y-6">
+                        <h3 className="text-center text-2xl font-light italic">주제: <span className="font-serif font-bold not-italic border-b-2 border-gray-100">{q.topic}</span></h3>
+
+                        <div className="flex-1 flex flex-col gap-4">
+                            {['A', 'B'].map((choice) => {
+                                const isCorrect = choice === q.humanAnswer;
+                                const isUserChoice = selectedAnswer === choice;
+                                let cardClass = "border-gray-100 bg-gray-50/50";
+                                
+                                if (isSelected) {
+                                    if (isCorrect) cardClass = "border-green-500 bg-green-50 shadow-md";
+                                    else if (isUserChoice) cardClass = "border-red-500 bg-red-50 shadow-md";
+                                    else cardClass = "opacity-20 scale-95 grayscale";
+                                }
+
+                                return (
+                                    <button 
+                                        key={choice} 
+                                        onClick={() => handleSelect(choice)} 
+                                        disabled={isSelected} 
+                                        className={`relative p-8 text-center rounded-[2rem] border-2 transition-all duration-300 flex flex-col justify-center items-center flex-1 min-h-[320px] ${cardClass}`}
+                                    >
+                                        <div className="absolute top-4 left-6 text-[10px] font-black text-gray-300 uppercase">{choice}</div>
+                                        <p className="font-serif text-lg md:text-2xl leading-[1.9] text-gray-800 break-keep whitespace-pre-wrap">{choice === 'A' ? q.poemA : q.poemB}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {isSelected && (
+                            <div className="bg-black text-white p-8 rounded-[2rem] shadow-2xl space-y-6 animate-in">
+                                <p className="text-base md:text-lg font-medium leading-relaxed opacity-90 break-keep italic">"{q.explanation}"</p>
+                                <button onClick={handleNext} className="w-full py-4 bg-white text-black font-black rounded-xl active:scale-95 transition-transform text-sm tracking-widest">
+                                    NEXT
+                                </button>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
