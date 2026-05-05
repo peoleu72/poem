@@ -2,87 +2,161 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI vs HUMAN | 시 구별 테스트</title>
-    <!-- Core Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBISM AI vs HUMAN</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            touch-action: manipulation;
-        }
-        .font-serif { font-family: 'Nanum Myeongjo', serif; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+        body { font-family: 'Nanum Myeongjo', serif; -webkit-font-smoothing: antialiased; }
+        .animate-in { animation: slideUpFade 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
     </style>
 </head>
-<body class="bg-white text-black selection:bg-black selection:text-white">
+<body class="bg-white">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect, useRef } = React;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFsW00RtWm_xrI3CuWENMGAmw9wj9e4b4",
+            authDomain: "poemtest-e6aca.firebaseapp.com",
+            projectId: "poemtest-e6aca",
+            storageBucket: "poemtest-e6aca.firebasestorage.app",
+            messagingSenderId: "316759257417",
+            appId: "1:316759257417:web:4297fddc3ec440a13eaa98"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const appId = "kbism-web-app";
 
         const QUESTIONS = [
-            {
-                id: 1, topic: "퇴근길",
-                poemA: "지하철 문이 닫히면\n검은 유리창 위로 겹쳐지는 얼굴들\n누구의 것도 아닌 피곤이\n서로의 어깨를 밀어내며 자리를 잡는다\n환승역의 소음은 익숙한 비명이 된다",
-                poemB: "주황색 가로등이 하나둘 켜지면\n오늘 하루도 무사히 끝났음을 안다\n집으로 돌아가는 발걸음은 가볍고\n내일은 오늘보다 더 나을 거라는\n작은 희망 하나 품고 걸어가는 길",
-                humanAnswer: 'A',
-                explanation: "A는 현대인의 건조한 정서를 '익숙한 비명'이라는 감각적인 어휘로 표현했습니다. B는 AI 특유의 '희망차고 전형적인' 마무리 방식이 돋보입니다."
-            },
-            {
-                id: 2, topic: "관계",
-                poemA: "우리는 서로의 문장 사이에 놓인\n침묵의 길이를 재는 데 시간을 다 썼다\n맞춤법이 틀린 마음들이\n교정되지 못한 채 쌓여가는 동안\n너는 나의 오타가 되었고 나는 너의 여백이 되었다",
-                poemB: "마음의 문을 열고 너에게 다가가면\n너는 환한 미소로 나를 반겨주었지\n우리 사이에 쌓인 오해의 벽을 허물고\n진심 어린 대화로 서로를 이해할 때\n사랑은 비로소 꽃을 피우는 법이니까",
-                humanAnswer: 'A',
-                explanation: "A는 '오타', '여백' 등 현대적인 비유를 통해 관계를 묘사한 사람의 시입니다. B는 AI가 학습한 고전적인 '사랑과 이해'의 공식을 따르고 있습니다."
-            },
-            {
-                id: 3, topic: "새벽",
-                poemA: "모두가 잠든 깊은 밤의 정적 속에서\n나 홀로 깨어 세상을 바라본다\n어둠은 만물을 감싸 안고\n지친 영혼에게 휴식을 선사하며\n새로운 내일을 위한 에너지를 채워준다",
-                poemB: "냉장고 돌아가는 소리가\n방 안의 유일한 생존 신고 같다\n싱크대 위에 놓인 씻지 않은 컵 하나가\n어제와 오늘 사이에 애매하게 걸려 있고\n창밖은 잉크를 쏟은 듯 무겁게 고여 있다",
-                humanAnswer: 'B',
-                explanation: "B는 생활 밀착형 소품(냉장고 소리, 씻지 않은 컵)을 통해 고독을 구체화한 사람의 시입니다. A는 새벽의 기능을 설명하는 AI의 서술 방식입니다."
-            },
-            {
-                id: 4, topic: "오래된 습관",
-                poemA: "손톱을 바짝 깎는 버릇이 있다\n살점이 드러나 아릴 때까지\n그렇게 해야만 비로소\n내가 내 몸의 경계를 확인하는 것 같아서\n덜어내도 줄어들지 않는 불안을 잘라낸다",
-                poemB: "매일 아침 같은 시간에 일어나\n창문을 열고 신선한 공기를 마신다\n반복되는 일상이 주는 안정감은\n나를 더 나은 사람으로 만들고\n어제보다 조금 더 성장한 나를 발견한다",
-                humanAnswer: 'A',
-                explanation: "A는 '손톱 깎기'와 '불안'을 연결한 사람의 심리적 묘사입니다. B는 자기계발서 느낌의 긍정적인 삶을 강조하는 AI의 패턴입니다."
-            },
-            {
-                id: 5, topic: "기다림",
-                poemA: "기다림은 창문에 맺힌 김 서림 같다\n손가락으로 이름을 써보아도\n금세 다시 흐려지는 풍경들\n너는 오지 않고 계절만 서성이다가\n유리창 너머로 저녁이 먼저 도착한다",
-                poemB: "버스를 기다리는 정류장에서\n시계를 보며 너를 생각한다\n너와 함께했던 소중한 시간들이\n영화처럼 머릿속을 스쳐 지나가고\n나는 설레는 마음으로 내일을 기다린다",
-                humanAnswer: 'A',
-                explanation: "A는 기다림을 '김 서림'과 '저녁의 도착'으로 시각화한 사람의 문장입니다. B는 누구나 생각할 수 있는 평이한 상황 설정과 결론을 가진 AI의 문장입니다."
-            }
+            { id: 1, topic: "퇴근길", poemA: "지하철 문이 닫히면\n검은 유리창 위로 겹쳐지는 얼굴들\n누구의 것도 아닌 피곤이\n서로의 어깨를 밀어내며 자리를 잡는다\n환승역의 소음은 익숙한 비명이 된다", poemB: "주황색 가로등이 하나둘 켜지면\n오늘 하루도 무사히 끝났음을 안다\n집으로 돌아가는 발걸음은 가볍고\n내일은 오늘보다 더 나을 거라는\n작은 희망 하나 품고 걸어가는 길", humanAnswer: 'A', explanation: "A는 현대인의 건조한 정서를 '익숙한 비명'이라는 감각적인 어휘로 표현했습니다.\n\n반면 B는 AI 특유의 '희망차고 전형적인' 마무리 방식이 돋보입니다." },
+            { id: 2, topic: "관계", poemA: "우리는 서로의 문장 사이에 놓인\n침묵의 길이를 재는 데 시간을 다 썼다\n맞춤법이 틀린 마음들이\n교정되지 못한 채 쌓여가는 동안\n너는 나의 오타가 되었고 나는 너의 여백이 되었다", poemB: "마음의 문을 열고 너에게 다가가면\n너는 환한 미소로 나를 반겨주었지\n우리 사이에 쌓인 오해의 벽을 허물고\n진심 어린 대화로 서로를 이해할 때\n사랑은 비로소 꽃을 피우는 법이니까", humanAnswer: 'A', explanation: "A는 '오타', '여백' 등 현대적인 비유를 통해 관계를 묘사한 사람의 시입니다.\n\nB는 AI가 학습한 고전적인 '사랑과 이해'의 공식을 정직하게 따르고 있습니다." },
+            { id: 3, topic: "새벽", poemA: "모두가 잠든 깊은 밤의 정적 속에서\n나 홀로 깨어 세상을 바라본다\n어둠은 만물을 감싸 안고\n지친 영혼에게 휴식을 선사하며\n새로운 내일을 위한 에너지를 채워준다", poemB: "냉장고 돌아가는 소리가\n방 안의 유일한 생존 신고 같다\n싱크대 위에 놓인 씻지 않은 컵 하나가\n어제와 오늘 사이에 애매하게 걸려 있고\n창밖은 잉크를 쏟은 듯 무겁게 고여 있다", humanAnswer: 'B', explanation: "B는 냉장고 소리나 씻지 않은 컵 같은 생활 밀착형 소품을 통해 고독을 구체화한 사람의 시입니다.\n\nA는 새벽의 기능을 사전적으로 설명하는 AI의 서술 방식에 가깝습니다." },
+            { id: 4, topic: "오래된 습관", poemA: "손톱을 바짝 깎는 버릇이 있다\n살점이 드러나 아릴 때까지\n그렇게 해야만 비로소\n내가 내 몸의 경계를 확인하는 것 같아서\n덜어내도 줄어들지 않는 불안을 잘라낸다", poemB: "매일 아침 같은 시간에 일어나\n창문을 열고 신선한 공기를 마신다\n반복되는 일상이 주는 안정감은\n나를 더 나은 사람으로 만들고\n어제보다 조금 더 성장한 나를 발견한다", humanAnswer: 'A', explanation: "A는 '손톱 깎기'라는 구체적인 행위와 '불안'을 연결한 사람의 심리적 묘사입니다.\n\nB는 자기계발서 느낌의 긍정적인 메시지만을 강조하는 AI의 전형적인 패턴입니다." },
+            { id: 5, topic: "기다림", poemA: "기다림은 창문에 맺힌 김 서림 같다\n손가락으로 이름을 써보아도\n금세 다시 흐려지는 풍경들\n너는 오지 않고 계절만 서성이다가\n유리창 너머로 저녁이 먼저 도착한다", poemB: "버스를 기다리는 정류장에서\n시계를 보며 너를 생각한다\n너와 함께했던 소중한 시간들이\n영화처럼 매일 머릿속을 스쳐 지나가고\n나는 설레는 마음으로 내일을 기다린다", humanAnswer: 'A', explanation: "A는 기다림을 '김 서림'과 '저녁의 도착'으로 비유하며 시각화한 사람의 문장입니다.\n\nB는 평이한 상황 설정과 뻔한 결론을 가진 전형적인 AI 문장입니다." },
+            { id: 6, topic: "여름의 끝", poemA: "매미 소리가 그친 자리에는\n어느새 서늘한 바람이 찾아와\n우리에게 가을이 왔음을 알린다\n푸르던 잎들이 색을 바꾸듯\n우리의 시간도 아름답게 깊어간다", poemB: "선풍기 날개 위에 쌓인 먼지가\n지나간 계절의 무게 같다\n아직 미지근한 공기를 억지로 돌리며\n우리는 더 이상 나눌 열기가 없는 사람들처럼\n등을 돌린 채 남은 여름을 소진한다", humanAnswer: 'B', explanation: "B는 '선풍기 먼지'라는 구체적 사물로 권태로운 관계를 묘사한 사람의 시입니다.\n\nA는 계절의 변화를 서술하고 교훈을 주려는 AI 특유의 화법입니다." },
+            { id: 7, topic: "기억", poemA: "잊으려 할수록 더 선명해지는\n그대와의 소중한 추억들\n가슴 한구석에 깊이 새겨진 채\n시간이 흘러도 변하지 않는 빛으로\n나의 길을 환하게 비춰줍니다", poemB: "오래된 서랍을 정리하다 발견한\n작동하지 않는 건전지처럼\n너에 대한 기억도 구석에서 녹슬어간다\n버려야 한다는 걸 알면서도\n손끝에 묻어나는 검은 가루가 아까워 다시 넣어둔다", humanAnswer: 'B', explanation: "B는 기억을 '녹슬어가는 건전지'로 비유하며 미련을 시각화했습니다.\n\nA는 추억을 '변하지 않는 빛'으로 표현하는 아주 일반적이고 추상적인 AI의 감성입니다." },
+            { id: 8, topic: "비", poemA: "하늘에서 내리는 빗방울은\n대지의 목마름을 축여주는 선물\n우울한 마음은 씻어내고\n내일의 희망을 싹트게 하는\n자연이 보내는 따뜻한 위로입니다", poemB: "우산 끝에서 떨어지는 물방울이\n자꾸만 신발 앞코를 적신다\n피할 수 없는 슬픔이 발등부터 차오르는 기분\n축축한 바짓단이 걸음을 붙잡을 때마다\n나는 내가 여전히 무거운 몸을 가졌음을 깨닫는다", humanAnswer: 'B', explanation: "B는 비 오는 날의 '축축함'과 '무게감'을 개인적인 정서로 연결했습니다.\n\nA는 비를 '대지의 선물' 등으로 정의하며 공익광고 같은 멘트를 던지는 AI의 특성입니다." },
+            { id: 9, topic: "고독", poemA: "혼자 있는 시간은 나를 만나는 시간\n고요함 속에서 진정한 나를 찾고\n내면의 목소리에 귀를 기울이며\n더 단단한 사람으로 성장하는\n귀중하고 소중한 휴식의 순간입니다", poemB: "텔레비전 소리를 크게 키워도\n방 안의 공백을 채울 수 없다\n어설프게 끓인 라면의 김이 서린 안경 너머로\n나의 그림자만이 유일한 대화 상대가 되어\n벽면 가득 길게 늘어져 있다", humanAnswer: 'B', explanation: "B는 라면 김, 텔레비전 소리 등 일상의 파편으로 외로움을 그려냈습니다.\n\nA는 고독을 '성장의 시간'으로 규정하고 훈계하려는 AI의 교과서적 답변입니다." },
+            { id: 10, topic: "꿈", poemA: "꿈을 향해 달려가는 당신의 발걸음\n포기하지 않는 열정이 있다면\n어떤 장애물도 넘을 수 있습니다\n저 높은 하늘의 별처럼 빛나는\n당신의 미래를 진심으로 응원합니다", poemB: "잠들지 못한 밤들이 쌓여\n눈 밑에 거뭇한 그늘을 만들었다\n내가 꾸던 꿈들은 다 어디로 갔을까\n베개 밑에 넣어둔 로또 한 장만이\n내일 아침을 견디게 하는 유일한 주문이 된다", humanAnswer: 'B', explanation: "B는 꿈과 현실 사이의 괴리(로또, 다크서클)를 솔직하고 씁쓸하게 표현한 사람의 시입니다.\n\nA는 꿈을 '희망'과 '응원'으로만 연결하는 AI의 전형적인 격려 멘트입니다." }
         ];
 
         function App() {
+            const [user, setUser] = useState(null);
             const [gameState, setGameState] = useState('start');
             const [currentRound, setCurrentRound] = useState(0);
             const [score, setScore] = useState(0);
             const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [slideIndex, setSlideIndex] = useState(0);
+            const [formData, setFormData] = useState({ name: '', age: '', phone: '', address: '' });
+            const [isSubmitted, setIsSubmitted] = useState(false);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            
+            const [showAdminLogin, setShowAdminLogin] = useState(false);
+            const [adminPassword, setAdminPassword] = useState('');
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [registrations, setRegistrations] = useState([]);
 
-            const handleSelect = (answer) => {
+            const touchStart = useRef(null);
+            const touchEnd = useRef(null);
+
+            useEffect(() => {
+                auth.signInAnonymously().catch(e => console.error("Auth Fail", e));
+                const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
+                return () => unsubscribe();
+            }, []);
+
+            useEffect(() => {
+                if (!isAdmin) return;
+                const unsubscribe = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations')
+                    .orderBy('timestamp', 'desc')
+                    .onSnapshot(snapshot => {
+                        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        setRegistrations(data);
+                    }, err => console.error("Firestore Listen Err", err));
+                return () => unsubscribe();
+            }, [isAdmin]);
+
+            const resetGame = () => {
+                setGameState('start');
+                setCurrentRound(0);
+                setScore(0);
+                setSelectedAnswer(null);
+                setSlideIndex(0);
+                setFormData({ name: '', age: '', phone: '', address: '' });
+                setIsSubmitted(false);
+                setIsSubmitting(false);
+                window.scrollTo(0, 0);
+            };
+
+            const saveToFirestoreAndReset = async () => {
+                if (isSubmitting) return;
+                if (!formData.name.trim() || !formData.phone.trim()) {
+                    alert("성함과 연락처를 모두 입력해주세요.");
+                    return;
+                }
+                setIsSubmitting(true);
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations').add({
+                        ...formData,
+                        score,
+                        accuracy: Math.round((score / QUESTIONS.length) * 100),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        userId: user ? user.uid : 'anon'
+                    });
+                    setIsSubmitted(true);
+                    setTimeout(resetGame, 2000);
+                } catch (err) {
+                    alert("데이터 저장 실패: " + err.message);
+                    setIsSubmitting(false);
+                }
+            };
+
+            const handleAdminLogin = () => {
+                if (adminPassword === 'weareone0314') {
+                    setIsAdmin(true);
+                    setShowAdminLogin(false);
+                } else {
+                    alert("비밀번호 불일치");
+                }
+            };
+
+            const deleteReg = async (id) => {
+                if(window.confirm("삭제하시겠습니까?")) {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('registrations').doc(id).delete();
+                }
+            }
+
+            const handleSelect = (choice) => {
                 if (selectedAnswer) return;
-                setSelectedAnswer(answer);
-                if (answer === QUESTIONS[currentRound].humanAnswer) setScore(s => s + 1);
+                setSelectedAnswer(choice);
+                if (choice === QUESTIONS[currentRound].humanAnswer) {
+                    setScore(prev => prev + 1);
+                }
             };
 
             const handleNext = () => {
                 if (currentRound < QUESTIONS.length - 1) {
-                    setCurrentRound(r => r + 1);
+                    setCurrentRound(prev => prev + 1);
                     setSelectedAnswer(null);
                     window.scrollTo(0, 0);
                 } else {
@@ -90,17 +164,90 @@
                 }
             };
 
+            const onTouchStartSwipe = (e) => { touchEnd.current = null; touchStart.current = e.targetTouches[0].clientX; };
+            const onTouchMoveSwipe = (e) => { touchEnd.current = e.targetTouches[0].clientX; };
+            const onTouchEndSwipe = () => {
+                if (!touchStart.current || !touchEnd.current) return;
+                const distance = touchStart.current - touchEnd.current;
+                if (distance > 50 && slideIndex < 2) setSlideIndex(slideIndex + 1);
+                if (distance < -50 && slideIndex > 0) setSlideIndex(slideIndex - 1);
+            };
+
+            const getFeedback = (s) => {
+                if (s <= 2) return { title: "순수한 알고리즘의 동반자", desc: "당신은 인공지능과 영혼의 단짝이시군요!\nAI의 논리적이고 희망찬 화법에 깊이 매료되어 있습니다." };
+                if (s <= 5) return { title: "냉정과 열정 사이", desc: "인간의 서툰 진심과 AI의 매끄러운 가짜 사이에서 방황하고 계시네요.\n조금만 더 사람 특유의 감정에 집중해 보세요!" };
+                if (s <= 8) return { title: "예리한 인간 감별사", desc: "상당한 수준입니다!\nAI가 흉내 내지 못하는 인간 특유의 비유와 뒤틀린 감각을 정확히 집어내고 계시네요." };
+                return { title: "최후의 인류 보안관", desc: "완벽합니다!\n당신은 기계가 결코 닿을 수 없는 인간 심연의 고통과 진실을 꿰뚫어 보고 있습니다." };
+            };
+
+            if (isAdmin) {
+                return (
+                    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+                        <div className="max-w-6xl mx-auto space-y-6">
+                            <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm">
+                                <h2 className="text-xl md:text-2xl font-black italic">Dashboard</h2>
+                                <button onClick={() => setIsAdmin(false)} className="px-6 py-2 bg-slate-100 rounded-full font-bold">Logout</button>
+                            </div>
+                            <div className="bg-white rounded-[2rem] shadow-sm overflow-x-auto">
+                                <table className="w-full text-left min-w-[700px]">
+                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">
+                                        <tr>
+                                            <th className="px-8 py-5">Date</th>
+                                            <th className="px-8 py-5">User Info</th>
+                                            <th className="px-8 py-5">Phone</th>
+                                            <th className="px-8 py-5 text-center">Score</th>
+                                            <th className="px-8 py-5 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {registrations.map((reg) => (
+                                            <tr key={reg.id} className="text-sm">
+                                                <td className="px-8 py-5 text-[11px] font-mono text-slate-400">
+                                                    {reg.timestamp ? new Date(reg.timestamp.toDate()).toLocaleString() : '...'}
+                                                </td>
+                                                <td className="px-8 py-5 font-bold">
+                                                    {reg.name} ({reg.age} / {reg.address})
+                                                </td>
+                                                <td className="px-8 py-5 text-blue-600 font-bold">{reg.phone}</td>
+                                                <td className="px-8 py-5 text-center font-black">{reg.accuracy}%</td>
+                                                <td className="px-8 py-5 text-right">
+                                                    <button onClick={() => deleteReg(reg.id)} className="text-rose-400 hover:text-rose-600 font-bold">DEL</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {registrations.length === 0 && <div className="p-20 text-center text-slate-300 font-bold">데이터가 없습니다.</div>}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
             if (gameState === 'start') {
                 return (
-                    <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-in">
-                        <div className="w-full max-w-md space-y-12 text-center">
-                            <h1 className="text-6xl font-black tracking-tighter leading-none">AI일까?<br />사람일까?</h1>
-                            <div className="py-8 border-y border-gray-100 font-medium text-lg text-gray-700 break-keep leading-relaxed">
-                                인공지능의 정교한 알고리즘과<br />인간의 서툰 진심 사이.<br />당신은 그 차이를 구별할 수 있습니까?
+                    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 relative overflow-hidden">
+                        <button onClick={() => setShowAdminLogin(true)} className="absolute top-0 left-0 w-20 h-20 opacity-0 z-50"></button>
+                        {showAdminLogin && (
+                            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+                                <div className="bg-white rounded-[3rem] p-10 w-full max-w-sm space-y-6 animate-in">
+                                    <h4 className="font-black text-2xl text-center tracking-tighter">ADMIN ACCESS</h4>
+                                    <input type="password" placeholder="Passcode" className="w-full p-5 bg-slate-50 border rounded-[1.5rem] text-center font-bold" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)}/>
+                                    <div className="flex gap-3">
+                                        <button onClick={() => setShowAdminLogin(false)} className="flex-1 py-4 bg-slate-100 rounded-[1.2rem] font-black">CANCEL</button>
+                                        <button onClick={handleAdminLogin} className="flex-1 py-4 bg-black text-white rounded-[1.2rem] font-black">OK</button>
+                                    </div>
+                                </div>
                             </div>
-                            <button onClick={() => setGameState('play')} className="w-full py-5 bg-black text-white text-xl font-bold rounded-2xl active:scale-95 transition-transform shadow-xl">
-                                테스트 시작하기
-                            </button>
+                        )}
+                        <div className="w-full max-w-lg space-y-12 text-center animate-in">
+                            <div className="space-y-4">
+                                <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] text-black italic">AI일까?<br />사람일까?</h1>
+                                <p className="text-xs font-black text-blue-600 uppercase tracking-[0.4em] pt-4">Turing-Test Simulation</p>
+                            </div>
+                            <div className="py-10 border-y border-slate-100 font-medium text-xl text-slate-700 italic font-serif leading-relaxed">"인공지능의 정교한 알고리즘과<br />인간의 서툰 진심 사이.<br />당신은 그 차이를 구별할 수 있습니까?"</div>
+                            <button onClick={() => setGameState('play')} className="w-full py-6 bg-black text-white text-2xl font-black rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] active:scale-95 transition-transform">테스트 시작하기</button>
+                            <p className="text-[10px] text-slate-300 font-black uppercase tracking-widest">© KBISM AI RESEARCH LAB</p>
                         </div>
                     </div>
                 );
@@ -108,18 +255,98 @@
 
             if (gameState === 'result') {
                 const accuracy = Math.round((score / QUESTIONS.length) * 100);
+                const feedback = getFeedback(score);
                 return (
-                    <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-in">
-                        <div className="max-w-md w-full text-center space-y-10">
-                            <h1 className="text-6xl font-black italic tracking-tighter">FINISHED</h1>
-                            <div className="bg-black text-white p-12 rounded-[2.5rem] shadow-2xl">
-                                <p className="text-gray-400 uppercase tracking-widest text-[10px] mb-4 font-bold">인간 감성 감지율</p>
-                                <p className="text-8xl font-black leading-none">{accuracy}%</p>
-                                <p className="mt-4 text-sm text-gray-400 font-medium italic">5문제 중 {score}문제를 맞혔습니다.</p>
+                    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start py-8 md:py-12 px-4 md:px-6 animate-in">
+                        <div className="max-w-md w-full text-center space-y-8">
+                            <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900">Analysis Report</h1>
+                            <div className="overflow-hidden w-full rounded-[3rem] shadow-2xl bg-black" onTouchStart={onTouchStartSwipe} onTouchMove={onTouchMoveSwipe} onTouchEnd={onTouchEndSwipe}>
+                                <div className="flex transition-transform duration-700 ease-[cubic-bezier(0.25, 1, 0.5, 1)]" style={{ transform: `translateX(-${slideIndex * 33.3333}%)`, width: '300%' }}>
+                                    
+                                    <div className="w-1/3 p-10 md:p-12 text-left text-white min-h-[600px] flex flex-col justify-between bg-gradient-to-b from-zinc-900 to-black">
+                                        <div className="space-y-6">
+                                            <p className="text-blue-500 uppercase tracking-widest text-[10px] font-black">감별 정확도 분석</p>
+                                            <p className="text-8xl md:text-9xl font-black leading-none tracking-tighter">{accuracy}<span className="text-4xl">%</span></p>
+                                            <div className="pt-10 border-t border-white/10 space-y-4">
+                                                <p className="text-green-400 font-black text-xl md:text-2xl uppercase tracking-tighter">{feedback.title}</p>
+                                                <p className="text-slate-300 text-lg font-medium italic font-serif leading-relaxed break-keep">{feedback.desc}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] font-black text-white/30 tracking-[0.3em] uppercase">swipe to explore →</p>
+                                    </div>
+
+                                    <div className="w-1/3 p-8 md:p-10 text-left text-white min-h-[600px] flex flex-col justify-between bg-zinc-900">
+                                        <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+                                            <p className="text-blue-400 uppercase tracking-widest text-[10px] font-black italic">KBISM Insight</p>
+                                            <div className="space-y-5 text-[14px] leading-relaxed break-keep font-medium text-slate-300">
+                                                <p className="text-xl font-black leading-tight text-white italic">
+                                                    안녕하세요, 저희는 교육 AI 스타트업 <span className="text-blue-400 underline underline-offset-4 decoration-2">KBISM</span> 입니다!
+                                                </p>
+                                                <p>
+                                                    현대 사회에서 AI는 더 이상 선택이 아닌, 필수가 되어가고 있습니다. 하지만 그 속에서도 AI가 쉽게 대체할 수 없는 인간만의 능력이 존재합니다.
+                                                </p>
+                                                <p className="text-white font-bold">
+                                                    바로 공감, 감정, 경험, 그리고 스스로 사고하는 힘입니다.
+                                                </p>
+                                                <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-4">
+                                                    <p>
+                                                        KBISM은 이번 테스트를 통해 우리가 얼마나 AI에 의존하고 있는지 돌아보고, 동시에 AI 시대 속에서 나만의 강점과 잠재력을 발견할 수 있도록 돕고자 합니다.
+                                                    </p>
+                                                    <p className="text-blue-300 text-xs font-black uppercase tracking-wider">• 심층 테스트 제공 혜택</p>
+                                                    <ul className="space-y-2 text-slate-400 text-[13px] leading-snug">
+                                                        <li>- 나의 AI 활용 성향 분석</li>
+                                                        <li>- 사고 및 감정 반응 방식 진단</li>
+                                                        <li>- 발전 가능한 인간적 역량 가이드</li>
+                                                        <li>- 전문가 대면 피드백 제공</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] font-black text-white/30 tracking-[0.3em] uppercase">swipe to sign up →</p>
+                                    </div>
+
+                                    <div className="w-1/3 p-8 md:p-10 text-left text-white min-h-[600px] flex flex-col justify-between bg-zinc-800">
+                                        <div className="space-y-8">
+                                            <div className="space-y-2">
+                                                <p className="text-amber-400 uppercase tracking-widest text-[10px] font-black italic">Special Invitation</p>
+                                                <h3 className="text-3xl font-black tracking-tighter">심층 분석 신청</h3>
+                                            </div>
+                                            {!isSubmitted ? (
+                                                <div className="space-y-6">
+                                                    <div className="space-y-3">
+                                                        <input type="text" placeholder="성함 (필수)" className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold outline-none" value={formData.name} onChange={(e)=>setFormData({...formData, name: e.target.value})}/>
+                                                        <div className="flex gap-3">
+                                                            <input type="number" placeholder="나이" className="w-1/3 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-sm outline-none font-bold" value={formData.age} onChange={(e)=>setFormData({...formData, age: e.target.value})}/>
+                                                            <input type="text" placeholder="지역(예시:운암동)" className="w-2/3 bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-sm outline-none font-bold" value={formData.address} onChange={(e)=>setFormData({...formData, address: e.target.value})}/>
+                                                        </div>
+                                                        <input type="tel" placeholder="연락처 (필수)" className="w-full bg-white/10 border border-white/10 rounded-2xl px-5 py-4 text-sm outline-none font-bold" value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})}/>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <button onClick={saveToFirestoreAndReset} disabled={isSubmitting} className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl text-lg ${isSubmitting ? 'opacity-50' : 'active:scale-95'}`}>
+                                                            {isSubmitting ? '전송 중...' : '분석 신청하기'}
+                                                        </button>
+                                                        <div className="flex items-center justify-center gap-2 text-amber-400 text-xs font-black animate-pulse">
+                                                            <span>☕️</span>
+                                                            <span>얼리버드 EVENT! 선착순 커피쿠폰 증정</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                                                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center animate-bounce">
+                                                        <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
+                                                    </div>
+                                                    <div className="text-center"><p className="text-xl font-black">신청 완료!</p></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <button onClick={() => window.location.reload()} className="w-full py-5 border-2 border-black text-black font-bold rounded-2xl active:scale-95 transition-transform text-lg">
-                                다시 도전하기
-                            </button>
+                            <div className="flex justify-center gap-3">
+                                {[0, 1, 2].map(i => (<button key={i} onClick={() => setSlideIndex(i)} className={`h-2 rounded-full transition-all duration-300 ${slideIndex === i ? 'bg-black w-12' : 'bg-slate-200 w-2'}`}></button>))}
+                            </div>
+                            <button onClick={resetGame} className="w-full py-5 bg-white border-2 border-black text-black font-black rounded-[2rem] text-xl active:scale-95 transition-transform">닫기</button>
                         </div>
                     </div>
                 );
@@ -129,47 +356,58 @@
             const isSelected = !!selectedAnswer;
 
             return (
-                <div className="min-h-screen bg-white flex flex-col">
-                    <header className="sticky top-0 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 z-50 py-4 px-6 flex justify-between items-center">
-                        <h2 className="font-black text-base tracking-tighter">DETECTION</h2>
-                        <span className="text-xs font-bold text-gray-400">{currentRound + 1} / {QUESTIONS.length}</span>
+                <div className="min-h-screen bg-white flex flex-col animate-in">
+                    <header className="sticky top-0 w-full bg-white/80 backdrop-blur-xl border-b border-slate-50 z-50 py-5 px-6 flex justify-between items-center">
+                        <h2 className="font-black text-lg tracking-tighter uppercase italic">KBISM Test Lab</h2>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 md:w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-black transition-all duration-700" style={{width: `${((currentRound + 1) / QUESTIONS.length) * 100}%`}}></div>
+                            </div>
+                            <span className="text-[10px] font-black text-slate-400">{currentRound + 1}/10</span>
+                        </div>
                     </header>
-                    
-                    <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 flex flex-col space-y-6">
-                        <h3 className="text-center text-2xl font-light italic">주제: <span className="font-serif font-bold not-italic border-b-2 border-gray-100">{q.topic}</span></h3>
-
-                        <div className="flex-1 flex flex-col gap-4">
+                    <main className="flex-1 w-full max-w-2xl mx-auto px-6 py-10 flex flex-col space-y-10 pb-40">
+                        <div className="text-center space-y-4">
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Topic {currentRound + 1}</p>
+                            <h3 className="text-3xl md:text-4xl font-serif font-black italic text-slate-900">{q.topic}</h3>
+                            <div className="inline-block px-6 py-2 bg-slate-50 rounded-full border border-slate-100 font-black text-slate-800 text-sm">어느 시가 <span className="text-blue-600 underline underline-offset-4 decoration-2">사람</span>의 작품인가요?</div>
+                        </div>
+                        <div className="flex flex-col gap-6">
                             {['A', 'B'].map((choice) => {
                                 const isCorrect = choice === q.humanAnswer;
                                 const isUserChoice = selectedAnswer === choice;
-                                let cardClass = "border-gray-100 bg-gray-50/50";
-                                
+                                let cardClass = "border-slate-100 bg-white hover:border-black active:scale-[0.98]";
                                 if (isSelected) {
-                                    if (isCorrect) cardClass = "border-green-500 bg-green-50 shadow-md";
-                                    else if (isUserChoice) cardClass = "border-red-500 bg-red-50 shadow-md";
-                                    else cardClass = "opacity-20 scale-95 grayscale";
+                                    if (isCorrect) cardClass = "border-green-500 bg-green-50/50 shadow-inner";
+                                    else if (isUserChoice) cardClass = "border-rose-500 bg-rose-50/50 shadow-inner";
+                                    else cardClass = "opacity-20 scale-95 grayscale pointer-events-none";
                                 }
-
                                 return (
-                                    <button 
-                                        key={choice} 
-                                        onClick={() => handleSelect(choice)} 
-                                        disabled={isSelected} 
-                                        className={`relative p-8 text-center rounded-[2rem] border-2 transition-all duration-300 flex flex-col justify-center items-center flex-1 min-h-[320px] ${cardClass}`}
-                                    >
-                                        <div className="absolute top-4 left-6 text-[10px] font-black text-gray-300 uppercase">{choice}</div>
-                                        <p className="font-serif text-lg md:text-2xl leading-[1.9] text-gray-800 break-keep whitespace-pre-wrap">{choice === 'A' ? q.poemA : q.poemB}</p>
+                                    <button key={choice} onClick={() => handleSelect(choice)} disabled={isSelected} className={`relative p-8 md:p-12 text-center rounded-[3rem] border-2 transition-all duration-500 flex flex-col justify-center items-center min-h-[250px] w-full ${cardClass}`}>
+                                        <div className="absolute top-6 left-8 text-[9px] font-black text-slate-300 uppercase tracking-widest italic">{choice} VERSION</div>
+                                        <p className="font-serif text-lg md:text-2xl leading-[1.8] text-slate-800 whitespace-pre-wrap font-medium">{choice === 'A' ? q.poemA : q.poemB}</p>
                                     </button>
                                 );
                             })}
                         </div>
-
                         {isSelected && (
-                            <div className="bg-black text-white p-8 rounded-[2rem] shadow-2xl space-y-6 animate-in">
-                                <p className="text-base md:text-lg font-medium leading-relaxed opacity-90 break-keep italic">"{q.explanation}"</p>
-                                <button onClick={handleNext} className="w-full py-4 bg-white text-black font-black rounded-xl active:scale-95 transition-transform text-sm tracking-widest">
-                                    NEXT
-                                </button>
+                            <div className="fixed bottom-6 left-4 right-4 max-w-2xl mx-auto z-[60] animate-in">
+                                <div className="bg-black text-white p-8 md:p-10 rounded-[3rem] shadow-2xl space-y-6 border border-white/10">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full ${selectedAnswer === q.humanAnswer ? 'bg-green-500/20 text-green-400' : 'bg-rose-500/20 text-rose-400'}`}>{selectedAnswer === q.humanAnswer ? 'Success!' : 'System Failed'}</span>
+                                            <div className="h-[1px] flex-1 bg-white/10"></div>
+                                        </div>
+                                        <div className="space-y-3 overflow-y-auto max-h-[300px] custom-scrollbar">
+                                            {q.explanation.split('\n\n').map((paragraph, idx) => (
+                                                <p key={idx} className="text-base md:text-xl font-medium italic font-serif text-slate-200 break-keep leading-relaxed">
+                                                    {paragraph}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <button onClick={handleNext} className="w-full py-4 md:py-5 bg-white text-black font-black rounded-2xl active:scale-95 text-sm tracking-widest uppercase transition-transform">{currentRound < QUESTIONS.length - 1 ? 'Next Challenge' : 'View Report'}</button>
+                                </div>
                             </div>
                         )}
                     </main>
