@@ -256,19 +256,15 @@
                 const accuracy = Math.round((score / QUESTIONS.length) * 100);
                 const feedback = getFeedback(score);
                 
-                // Navigation Logic
                 const isLastSlide = slideIndex === 2;
-                const canSubmit = formData.name.trim() && formData.phone.trim();
 
                 const handleFooterButtonClick = () => {
                     if (slideIndex < 2) {
                         setSlideIndex(prev => prev + 1);
                     } else if (isSubmitted) {
                         resetGame();
-                    } else {
-                        // On slide 3 but not submitted, handled by the form button itself or an alert
-                        if (!canSubmit) alert("성함과 연락처를 모두 입력해주세요.");
                     }
+                    // 슬라이드 2에서 제출되지 않았을 때는 폼 내 버튼을 통해서만 작동하도록 하여 흐름 강제
                 };
 
                 return (
@@ -356,7 +352,7 @@
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-xl font-black">신청 완료!</p>
-                                                        <p className="text-sm text-slate-400 mt-2">감사합니다. 곧 연락드리겠습니다.</p>
+                                                        <p className="text-sm text-slate-400 mt-2">감사합니다. 하단의 닫기 버튼을 눌러주세요.</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -372,13 +368,14 @@
                             {/* DYNAMIC FOOTER BUTTON */}
                             <button 
                                 onClick={handleFooterButtonClick} 
-                                className={`w-full py-5 rounded-[2rem] text-xl font-black transition-all duration-300 active:scale-95 shadow-lg ${
+                                disabled={isLastSlide && !isSubmitted}
+                                className={`w-full py-5 rounded-[2rem] text-xl font-black transition-all duration-300 shadow-lg ${
                                     isLastSlide 
-                                        ? (isSubmitted ? 'bg-black text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed') 
-                                        : 'bg-white border-2 border-black text-black'
+                                        ? (isSubmitted ? 'bg-black text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed') 
+                                        : 'bg-white border-2 border-black text-black active:scale-95'
                                 }`}
                             >
-                                {slideIndex < 2 ? '다음 단계로' : (isSubmitted ? '테스트 종료' : '신청 후 종료 가능')}
+                                {slideIndex < 2 ? '다음 단계로' : '닫기'}
                             </button>
                         </div>
                     </div>
